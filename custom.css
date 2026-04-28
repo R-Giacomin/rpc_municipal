@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --blue-gov: #1351B4;
+  --blue-dark: #0C3D8C;
+  --blue-light: #C5D4EB;
+  --green: #168821;
+  --yellow: #FFCD07;
+  --red: #E52207;
+  --orange: #FF8C00;
+  --bg: #F8F9FA;
+  --text: #1B1B1B;
+  --border: #CCCCCC;
+  --white: #FFFFFF;
+}
+
+body, .marimo {
+  font-family: 'Raleway', sans-serif !important;
+  background: var(--bg) !important;
+  color: var(--text);
+}
+
+.gov-header {
+  background: var(--blue-gov);
+  color: white;
+  padding: 0;
+  margin: -16px -16px 24px -16px;
+  border-bottom: 4px solid var(--yellow);
+  border-radius: 0;
+}
+.gov-bar {
+  background: #071D41;
+  color: #AAA;
+  font-size: 12px;
+  padding: 4px 24px;
+}
+.gov-title {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.gov-title h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+.gov-title p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--blue-light);
+}
+
+.kpi-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  flex: 1;
+  min-width: 200px;
+  background: var(--white);
+  border-radius: 8px;
+  padding: 20px;
+  border-left: 4px solid var(--blue-gov);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.kpi-card h3 {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.kpi-card .value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--blue-gov);
+}
+.kpi-card .sub {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue-gov);
+  border-bottom: 2px solid var(--blue-light);
+  padding-bottom: 8px;
+  margin: 24px 0 16px 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+}
+.badge-otima { background: var(--green); }
+.badge-boa { background: #2E7D32; }
+.badge-razoavel { background: var(--orange); }
+.badge-pouco { background: var(--red); }
+
+.metodo-section {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 24px 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+  line-height: 1.7;
+}
+.metodo-section h2 {
+  color: var(--blue-gov);
+  font-size: 20px;
+  border-bottom: 2px solid var(--blue-light);
+  padding-bottom: 8px;
+}
+.metodo-section h3 {
+  color: var(--blue-dark);
+  font-size: 16px;
+  margin-top: 20px;
+}
+.metodo-section table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+.metodo-section th {
+  background: var(--blue-gov);
+  color: white;
+  padding: 10px;
+  text-align: left;
+}
+.metodo-section td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.metodo-section tr:nth-child(even) {
+  background: #F0F4F8;
+}
+
+.download-btn {
+  display: inline-block;
+  background: var(--blue-gov);
+  color: white !important;
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+}
+.download-btn:hover {
+  background: var(--blue-dark);
+}
+
+@media (max-width: 768px) {
+  .kpi-row { flex-direction: column; }
+}
+/* Sticky Marimo Tab List */
+[role="tablist"] {
+  position: sticky !important;
+  top: 165px !important; /* Aumentado para evitar que fique sob o cabeçalho */
+  z-index: 1001 !important; /* Maior que o do cabeçalho para garantir visibilidade */
+  background: var(--bg) !important;
+  padding: 12px 16px !important;
+  margin: 0 -16px !important;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Ajuste de scroll-margin para links internos */
+h2, .section-title {
+  scroll-margin-top: 220px;
+}
+
+/* Layout Responsivo para Gráficos */
+/* Por padrão (mobile), o vstack já empilha. No desktop, forçamos o lado a lado. */
+@media (min-width: 1100px) {
+  [role="tabpanel"] .marimo-vstack > .marimo-vstack:last-child {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    width: 100% !important;
+  }
+  
+  [role="tabpanel"] .marimo-vstack > .marimo-vstack:last-child > * {
+    flex: 1 !important;
+    width: 50% !important;
+  }
+}
+
+@media (max-width: 1099px) {
+  [role="tabpanel"] .marimo-vstack > .marimo-vstack:last-child > * {
+    width: 100% !important;
+    margin-bottom: 20px;
+  }
+}
