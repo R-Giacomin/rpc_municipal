@@ -1,0 +1,15 @@
+[experimental]
+wasm = true
+
+[package]
+manager = "pip"
+
+[package.dependencies]
+plotly = "*"
+pandas = "*"
+duckdb = "*"
+folium = "*"
+branca = "*"
+pyarrow = "*"
+scipy = "*"
+numpy = "*"
