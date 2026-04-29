@@ -1,9 +1,24 @@
-# marimo: requirements=["pandas", "duckdb", "scipy", "plotly"]
+# marimo: requirements=["pandas", "duckdb", "scipy", "plotly", "pyarrow"]
 
 import marimo
 
 __generated_with = "0.23.3"
 app = marimo.App(width="medium", css_file="custom.css")
+
+
+@app.cell
+async def _():
+    import sys
+
+    # Se estivermos rodando no navegador (WASM/GitHub Pages), forçamos o download
+    if "pyodide" in sys.modules:
+        import importlib
+        _micropip = importlib.import_module("micropip")
+        await _micropip.install(["plotly", "scipy", "pyarrow"])
+
+    # Variável de controle para o Marimo saber a ordem correta de execução
+    plotly_instalado = True
+    return
 
 
 @app.cell

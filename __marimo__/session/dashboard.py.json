@@ -6,166 +6,81 @@
   },
   "cells": [
     {
+      "id": "kJga",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    },
+    {
       "id": "Hbol",
-      "code_hash": "56c3ed2e916ef599db0b9c046a1538f5",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "code_hash": "71f71c4a60b9565e7864c42cd863f2a7",
+      "outputs": [],
       "console": []
     },
     {
       "id": "MJUe",
       "code_hash": "66b734a41448aee83f4cf8db866d260c",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "vblA",
       "code_hash": "3be9112ccd237911748602bc6632959d",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "bkHC",
       "code_hash": "c82db872f91f7478d7fa0a824e032d3e",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "lEQa",
       "code_hash": "88aa73dc555efc17e2bedf54309fb85f",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "PKri",
       "code_hash": "71f443778bb3a6d3b8e8aaad4eace6f4",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "Xref",
       "code_hash": "0cc014d4392195384fbee0a1eac61a0d",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
-      "console": [
-        {
-          "type": "stream",
-          "name": "stderr",
-          "text": "C:\\Users\\rafael.giacomin\\AppData\\Local\\Temp\\marimo_9992\\__marimo__cell_Xref_.py:28: DeprecationWarning: *choropleth_mapbox* is deprecated! Use *choropleth_map* instead. Learn more at: https://plotly.com/python/mapbox-to-maplibre/\n  fig = px.choropleth_mapbox(\n",
-          "mimetype": "text/plain"
-        }
-      ]
+      "outputs": [],
+      "console": []
     },
     {
       "id": "SFPL",
       "code_hash": "cee8b372cc82844fa4823c110bb9ffa8",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "BYtC",
       "code_hash": "24eecd7ab1a5a0190abd7decc878ac72",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "RGSE",
       "code_hash": "f52b328508c90a54447db706c7de32c3",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "Kclp",
       "code_hash": "f2f8ec1893b0baac4d55de2c05cf6b98",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
       "id": "emfo",
       "code_hash": "12a1726faf8acbb8c299b521c441e2a0",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/plain": ""
-          }
-        }
-      ],
+      "outputs": [],
       "console": []
     },
     {
