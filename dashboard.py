@@ -9,14 +9,37 @@ app = marimo.App(width="medium", css_file="custom.css")
 @app.cell
 async def _():
     import sys
+    import os
 
-    # Se estivermos rodando no navegador (WASM), forçamos o download
+    # Se estivermos rodando no navegador (WASM), preparamos o ambiente virtual
     if "pyodide" in sys.modules:
         import micropip  # type: ignore
+        import pyodide.http  # type: ignore
+
+        # 1. Instala o Plotly
         await micropip.install("plotly")
 
-    # Variável de controle para o Marimo saber a ordem correta de execução
-    plotly_instalado = True
+        # Função auxiliar para baixar arquivos da URL para o disco virtual
+        async def baixar_arquivo(url, destino):
+            # Garante que a pasta existe (ex: 'assets')
+            pasta = os.path.dirname(destino)
+            if pasta:
+                os.makedirs(pasta, exist_ok=True)
+
+            # Baixa o arquivo e salva na memória
+            resposta = await pyodide.http.pyfetch(url)
+            conteudo = await resposta.bytes()
+            with open(destino, "wb") as f:
+                f.write(conteudo)
+
+        # 2. Baixa a base de dados Parquet
+        await baixar_arquivo("./Municipios_Rpc_previstos_Reais.parquet", "Municipios_Rpc_previstos_Reais.parquet")
+
+        # 3. Baixa o arquivo do Mapa (GeoJSON)
+        await baixar_arquivo("./assets/municipios_br_simpl.geojson", "assets/municipios_br_simpl.geojson")
+
+    # Variável de controle para o Marimo aguardar tudo terminar
+    ambiente_preparado = True
     return
 
 
@@ -27,7 +50,6 @@ def _():
     import duckdb
     import plotly.express as px
     import json
-    import os
     import numpy as np
     from scipy.stats import gaussian_kde
     import plotly.graph_objects as go
