@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
+    "altair",
     "branca",
     "duckdb",
     "folium",
     "marimo",
     "pandas",
-    "plotly",
     "pyarrow",
     "scipy",
 ]
 [tool.marimo.runtime]
-output_max_bytes = 50_000_000  # Aumenta para 50MB
+output_max_bytes = 50_000_000
