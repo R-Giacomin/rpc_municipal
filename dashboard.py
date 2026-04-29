@@ -6,17 +6,6 @@ app = marimo.App(width="medium", css_file="custom.css")
 
 
 @app.cell
-async def _():
-    # Forçar instalação no ambiente WASM do navegador
-    import sys
-    if "pyodide" in sys.modules:
-        import importlib
-        _micropip = importlib.import_module("micropip")
-        await _micropip.install(["plotly", "scipy", "folium", "branca", "duckdb", "pyarrow"])
-    return
-
-
-@app.cell
 def _():
     import marimo as mo
     import pandas as pd
@@ -57,6 +46,7 @@ def _():
     map_regiao_uf = df_full.groupby('Região')['sigla_uf'].unique().apply(list).to_dict()
     return (
         METODOLOGIA_HTML,
+        cm,
         con,
         df_full,
         folium,
