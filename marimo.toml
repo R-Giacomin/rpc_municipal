@@ -6,9 +6,6 @@ packages = [
     "plotly",
     "pandas",
     "duckdb", 
-    "folium",
-    "branca",
-    "pyarrow",
     "scipy",
     "numpy",
     "openblas"

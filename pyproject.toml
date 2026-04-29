@@ -4,12 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
-    "altair",
     "duckdb",
     "marimo",
     "pandas",
     "plotly",
-    "pyarrow",
     "scipy",
 ]
 [tool.marimo.runtime]

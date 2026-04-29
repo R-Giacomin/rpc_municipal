@@ -1,4 +1,4 @@
-# marimo: requirements=["altair", "pandas", "duckdb", "pyarrow", "scipy", "plotly"]
+# marimo: requirements=["pandas", "duckdb", "scipy", "plotly"]
 
 import marimo
 
@@ -11,7 +11,6 @@ def _():
     import marimo as mo
     import pandas as pd
     import duckdb
-    import altair as alt
     import plotly.express as px
     import json
     import os
@@ -20,11 +19,8 @@ def _():
     from scipy.stats import gaussian_kde
     import plotly.graph_objects as go
 
-    # Desabilitar limite de linhas do Altair
-    alt.data_transformers.disable_max_rows()
-
     # Carregar dados
-    df_full = pd.read_parquet("Municipios_Rpc_previstos_Reais.parquet")
+    df_full = duckdb.query("SELECT * FROM 'Municipios_Rpc_previstos_Reais.parquet'").df()
     uf_map = {11:'RO',12:'AC',13:'AM',14:'RR',15:'PA',16:'AP',17:'TO',
               21:'MA',22:'PI',23:'CE',24:'RN',25:'PB',26:'PE',27:'AL',
               28:'SE',29:'BA',31:'MG',32:'ES',33:'RJ',35:'SP',
