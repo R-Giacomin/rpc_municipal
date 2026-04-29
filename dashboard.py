@@ -1,35 +1,10 @@
 # marimo: requirements=["plotly", "pandas", "duckdb", "folium", "branca", "pyarrow", "scipy"]
+# marimo: pyodide_packages=["plotly"]
 import marimo
 
 __generated_with = "0.23.3"
 app = marimo.App(width="medium", css_file="custom.css")
 
-@app.cell
-async def _():
-    import sys
-    import marimo as mo
-    
-    # Verificar ambiente
-    if "pyodide" in sys.modules:
-        import pyodide
-        print(f"🔍 Pyodide versão: {pyodide.__version__}")
-        
-        # Tentar instalar plotly explicitamente
-        try:
-            import micropip
-            await micropip.install("plotly")
-            print("✅ Plotly instalado com sucesso!")
-        except Exception as e:
-            print(f"❌ Erro ao instalar plotly: {e}")
-            
-            # Verificar se já existe
-            try:
-                import plotly
-                print(f"✅ Plotly já estava disponível: {plotly.__version__}")
-            except:
-                print("❌ Plotly não está disponível no Pyodide")
-    
-    return
 
 @app.cell
 def _():
