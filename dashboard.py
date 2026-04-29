@@ -55,7 +55,6 @@ def _(ambiente_preparado):
     import duckdb
     import plotly.express as px
     import json
-    import os
     import numpy as np
     from scipy.stats import gaussian_kde
     import plotly.graph_objects as go
