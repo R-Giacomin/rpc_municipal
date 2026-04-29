@@ -11,50 +11,56 @@ async def _():
     import sys
     import os
 
-    # Se estivermos rodando no navegador (WASM), preparamos o ambiente virtual
+    # Definimos a variável fora do if para garantir que ela sempre exista
+    ambiente_preparado = False
+
+    # Se estivermos rodando no navegador (WASM)
     if "pyodide" in sys.modules:
         import micropip  # type: ignore
         import pyodide.http  # type: ignore
 
-        # 1. Instala o Plotly
         await micropip.install("plotly")
 
-        # Função auxiliar para baixar arquivos da URL para o disco virtual
         async def baixar_arquivo(url, destino):
-            # Garante que a pasta existe (ex: 'assets')
             pasta = os.path.dirname(destino)
             if pasta:
                 os.makedirs(pasta, exist_ok=True)
-
-            # Baixa o arquivo e salva na memória
+            
             resposta = await pyodide.http.pyfetch(url)
+            # Trava de segurança: se o arquivo não for encontrado, ele avisa na hora!
+            if not resposta.ok:
+                raise Exception(f"Erro ao baixar {url}. Status: {resposta.status}")
+            
             conteudo = await resposta.bytes()
             with open(destino, "wb") as f:
                 f.write(conteudo)
 
-        # 2. Baixa a base de dados Parquet
-        await baixar_arquivo("./Municipios_Rpc_previstos_Reais.parquet", "Municipios_Rpc_previstos_Reais.parquet")
+        # URL base do seu GitHub Pages para forçar o download correto
+        base_url = "https://r-giacomin.github.io/rpc_municipal"
+    
+        await baixar_arquivo(f"{base_url}/Municipios_Rpc_previstos_Reais.parquet", "Municipios_Rpc_previstos_Reais.parquet")
+        await baixar_arquivo(f"{base_url}/assets/municipios_br_simpl.geojson", "assets/municipios_br_simpl.geojson")
 
-        # 3. Baixa o arquivo do Mapa (GeoJSON)
-        await baixar_arquivo("./assets/municipios_br_simpl.geojson", "assets/municipios_br_simpl.geojson")
-
-    # Variável de controle para o Marimo aguardar tudo terminar
+    # Avisa que tudo terminou
     ambiente_preparado = True
     return
 
 
 @app.cell
-def _():
+def _(ambiente_preparado):
+    _ = ambiente_preparado  # <-- ISSO AQUI impede o Marimo de apagar o argumento!
+    
     import marimo as mo
     import pandas as pd
     import duckdb
     import plotly.express as px
     import json
+    import os
     import numpy as np
     from scipy.stats import gaussian_kde
     import plotly.graph_objects as go
 
-    # Carregar dados
+    # Carregar dados usando DuckDB do disco virtual
     df_full = duckdb.query("SELECT * FROM 'Municipios_Rpc_previstos_Reais.parquet'").df()
     uf_map = {11:'RO',12:'AC',13:'AM',14:'RR',15:'PA',16:'AP',17:'TO',
               21:'MA',22:'PI',23:'CE',24:'RN',25:'PB',26:'PE',27:'AL',

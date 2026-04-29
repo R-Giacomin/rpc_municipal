@@ -7,7 +7,7 @@
   "cells": [
     {
       "id": "Hbol",
-      "code_hash": "df78b088d5d1d365101a3c23c62e6738",
+      "code_hash": "6670fb726a0e9efd80012453d5645cc6",
       "outputs": [
         {
           "type": "data",
@@ -124,7 +124,7 @@
         {
           "type": "stream",
           "name": "stderr",
-          "text": "C:\\Users\\rafael.giacomin\\AppData\\Local\\Temp\\marimo_23412\\__marimo__cell_BYtC_.py:28: DeprecationWarning: *choropleth_mapbox* is deprecated! Use *choropleth_map* instead. Learn more at: https://plotly.com/python/mapbox-to-maplibre/\n  fig = px.choropleth_mapbox(\n",
+          "text": "C:\\Users\\rafael.giacomin\\AppData\\Local\\Temp\\marimo_34292\\__marimo__cell_BYtC_.py:28: DeprecationWarning: *choropleth_mapbox* is deprecated! Use *choropleth_map* instead. Learn more at: https://plotly.com/python/mapbox-to-maplibre/\n  fig = px.choropleth_mapbox(\n",
           "mimetype": "text/plain"
         }
       ]
