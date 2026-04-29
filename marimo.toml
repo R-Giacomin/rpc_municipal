@@ -8,5 +8,7 @@ packages = [
     "duckdb", 
     "scipy",
     "numpy",
-    "openblas"
+    "openblas",
+    "folium",
+    "branca"
 ]

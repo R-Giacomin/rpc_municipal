@@ -7,7 +7,7 @@
   "cells": [
     {
       "id": "Hbol",
-      "code_hash": "6670fb726a0e9efd80012453d5645cc6",
+      "code_hash": "59095eec4c41c890e8dcf31b1eb38cf8",
       "outputs": [
         {
           "type": "data",
@@ -20,7 +20,7 @@
     },
     {
       "id": "MJUe",
-      "code_hash": "cdb3bd34e5e4e62b7fafae82d0316722",
+      "code_hash": "d3115e20aed5a05d4758a44484315e2e",
       "outputs": [
         {
           "type": "data",
@@ -111,7 +111,7 @@
     },
     {
       "id": "BYtC",
-      "code_hash": "0cc014d4392195384fbee0a1eac61a0d",
+      "code_hash": "cf0130dee2e79f1474531c2473964ea1",
       "outputs": [
         {
           "type": "data",
@@ -120,14 +120,7 @@
           }
         }
       ],
-      "console": [
-        {
-          "type": "stream",
-          "name": "stderr",
-          "text": "C:\\Users\\rafael.giacomin\\AppData\\Local\\Temp\\marimo_34292\\__marimo__cell_BYtC_.py:28: DeprecationWarning: *choropleth_mapbox* is deprecated! Use *choropleth_map* instead. Learn more at: https://plotly.com/python/mapbox-to-maplibre/\n  fig = px.choropleth_mapbox(\n",
-          "mimetype": "text/plain"
-        }
-      ]
+      "console": []
     },
     {
       "id": "RGSE",

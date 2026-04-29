@@ -19,37 +19,37 @@ async def _():
         import micropip  # type: ignore
         import pyodide.http  # type: ignore
 
-        await micropip.install("plotly")
+        await micropip.install("plotly", "folium", "branca")
 
         async def baixar_arquivo(url, destino):
             pasta = os.path.dirname(destino)
             if pasta:
                 os.makedirs(pasta, exist_ok=True)
-            
+
             resposta = await pyodide.http.pyfetch(url)
             # Trava de segurança: se o arquivo não for encontrado, ele avisa na hora!
             if not resposta.ok:
                 raise Exception(f"Erro ao baixar {url}. Status: {resposta.status}")
-            
+
             conteudo = await resposta.bytes()
             with open(destino, "wb") as f:
                 f.write(conteudo)
 
         # URL base do seu GitHub Pages para forçar o download correto
         base_url = "https://r-giacomin.github.io/rpc_municipal"
-    
+
         await baixar_arquivo(f"{base_url}/Municipios_Rpc_previstos_Reais.parquet", "Municipios_Rpc_previstos_Reais.parquet")
         await baixar_arquivo(f"{base_url}/assets/municipios_br_simpl.geojson", "assets/municipios_br_simpl.geojson")
 
     # Avisa que tudo terminou
     ambiente_preparado = True
-    return
+    return (ambiente_preparado,)
 
 
 @app.cell
 def _(ambiente_preparado):
     _ = ambiente_preparado  # <-- ISSO AQUI impede o Marimo de apagar o argumento!
-    
+
     import marimo as mo
     import pandas as pd
     import duckdb
@@ -58,6 +58,8 @@ def _(ambiente_preparado):
     import numpy as np
     from scipy.stats import gaussian_kde
     import plotly.graph_objects as go
+    import folium
+    import branca
 
     # Carregar dados usando DuckDB do disco virtual
     df_full = duckdb.query("SELECT * FROM 'Municipios_Rpc_previstos_Reais.parquet'").df()
@@ -85,6 +87,7 @@ def _(ambiente_preparado):
     return (
         con,
         df_full,
+        folium,
         gaussian_kde,
         go,
         json,
@@ -228,7 +231,7 @@ def _(df_filtered, mo):
 
 
 @app.cell
-def _(df_filtered, json, mo, px):
+def _(df_filtered, folium, json, mo):
     # Carregar e processar o GeoJSON removendo o último dígito do codarea
     geojson_path = "./assets/municipios_br_simpl.geojson"
 
@@ -236,49 +239,106 @@ def _(df_filtered, json, mo, px):
     with open(geojson_path, 'r') as f:
         geojson_data = json.load(f)
 
-    # Função para normalizar códigos para 6 dígitos
-    def normalize_6_digits(val):
-        s = str(int(float(val)))
-        return s[:6] if len(s) == 7 else s
-
-    # Processar GeoJSON: Garantir que cada feature tenha um 'id' de 6 dígitos
+    # Processar cada feature: remover o último dígito do codarea
     for feature in geojson_data['features']:
         if 'codarea' in feature['properties']:
-            cod_6 = normalize_6_digits(feature['properties']['codarea'])
-            feature['id'] = cod_6
-            feature['properties']['codarea'] = cod_6
+            codarea_original = feature['properties']['codarea']
+            # Remover o último dígito (converter de 7 para 6 dígitos)
+            codarea_6dig = codarea_original[:-1] if codarea_original else ""
+            feature['properties']['codarea'] = codarea_6dig
 
-    # Preparar dados: Garantir que a coluna 'id' tenha os mesmos 6 dígitos
+    # Preparar dados
     map_data = df_filtered[['codigo_ibge', 'Rpc_Reais2024', 'municipio', 'sigla_uf']].copy()
-    map_data['id'] = map_data['codigo_ibge'].apply(normalize_6_digits)
+    # Garantir 6 dígitos para o merge com GeoJSON
+    map_data['codigo_ibge'] = map_data['codigo_ibge'].astype(str).apply(lambda x: x[:6].zfill(6))
 
     if map_data.empty:
         fig_map = mo.md("Sem dados para exibir no mapa.")
     else:
-        # Criar mapa com Plotly
-        fig = px.choropleth_mapbox(
-            map_data,
-            geojson=geojson_data,
-            locations='id',
-            # Ao omitir featureidkey, o Plotly usa o campo 'id' que definimos no loop acima
-            color='Rpc_Reais2024',
-            color_continuous_scale='Teal',
-            range_color=(map_data['Rpc_Reais2024'].min(), map_data['Rpc_Reais2024'].max()),
-            mapbox_style='carto-positron',
-            zoom=3.5,
-            center={"lat": -14.235, "lon": -51.925},
-            opacity=0.8,
-            labels={'Rpc_Reais2024': 'RPC (R$ 2024)'},
-            hover_name='municipio',
-            hover_data={'Rpc_Reais2024': ':,.2f', 'sigla_uf': True, 'id': True}
-        )
-        fig.update_layout(
-            margin={"r": 0, "t": 0, "l": 0, "b": 0},
-            height=600,
-            dragmode=False
+        # Calcular bins
+        _min, _max = map_data['Rpc_Reais2024'].min(), map_data['Rpc_Reais2024'].max()
+        if _min == _max:
+            _min = _min * 0.9
+            _max = _max * 1.1
+
+        # Criar o mapa base com coordenadas corrigidas para o Brasil
+        _m = folium.Map(
+            location=[-14.2350, -51.9253],  # Centro geográfico do Brasil
+            zoom_start=4.2,  # Zoom adequado para mostrar o país inteiro
+            tiles="cartodbpositron",
+            width='100%',  # Largura 100% do contêiner
+            height='600px',  # Altura fixa
+            control_scale=True  # Adiciona escala no mapa
         )
 
-        fig_map = mo.ui.plotly(fig)
+        # Ajustar os bounds máximo para garantir que todo o Brasil seja visível
+        _m.fit_bounds([[-33.75, -73.98], [5.27, -34.79]])  # Bounding box do Brasil
+
+        # Adicionar choropleth com o GeoJSON processado
+        choropleth = folium.Choropleth(
+            geo_data=geojson_data,
+            data=map_data,
+            columns=["codigo_ibge", "Rpc_Reais2024"],
+            key_on="feature.properties.codarea",
+            fill_color="PuBuGn",
+            fill_opacity=0.9,
+            line_opacity=0.01,
+            legend_name="RPC (R$ 2024)",
+            bins=10,
+            highlight=True,
+            reset=True,
+            smooth_factor=0.5,
+            nan_fill_color="lightgray",
+            nan_fill_opacity=0.3
+        ).add_to(_m)
+
+        # Criar dicionários para lookup rápido
+        nome_dict = dict(zip(map_data['codigo_ibge'], map_data['municipio']))
+        rpc_dict = dict(zip(map_data['codigo_ibge'], map_data['Rpc_Reais2024']))
+
+        # Enriquecer o GeoJSON com nomes e valores formatados para o tooltip
+        for feature in choropleth.geojson.data['features']:
+            codarea = feature['properties'].get('codarea', '')
+            if codarea in nome_dict:
+                feature['properties']['nome_mun'] = nome_dict[codarea]
+                valor = rpc_dict[codarea]
+                feature['properties']['rpc_str'] = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            else:
+                feature['properties']['nome_mun'] = 'Sem dado'
+                feature['properties']['rpc_str'] = 'N/A'
+
+        # Adicionar tooltip único com todas as informações
+        folium.GeoJsonTooltip(
+            fields=['nome_mun', 'codarea', 'rpc_str'],
+            aliases=['Município: ', 'Código IBGE: ', 'RPC: '],
+            style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px; border: 1px solid grey; border-radius: 5px;")
+        ).add_to(choropleth.geojson)
+
+        # JavaScript para garantir que o mapa ocupe todo o espaço
+        fix_size_js = """
+        <script>
+        setTimeout(function() {
+            var mapDiv = document.querySelector('.folium-map');
+            if (mapDiv) {
+                mapDiv.style.width = '100%';
+                mapDiv.style.height = '600px';
+                var mapObj = window[mapDiv.id];
+                if (mapObj) {
+                    mapObj.invalidateSize();
+                    mapObj.setView([-14.2350, -51.9253], 4.2);
+                }
+            }
+        }, 200);
+        </script>
+        """
+        _m.get_root().html.add_child(folium.Element(fix_size_js))
+
+        # Usar um contêiner HTML com CSS adequado
+        fig_map = mo.Html(f'''
+        <div style="width: 100%; height: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            {_m._repr_html_()}
+        </div>
+        ''')
     return (fig_map,)
 
 
