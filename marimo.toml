@@ -1,15 +1,15 @@
-[experimental]
-wasm = true
+[tool.marimo.runtime]
+output_max_bytes = 50_000_000
 
-[package]
-manager = "pip"
-
-[package.dependencies]
-plotly = "*"
-pandas = "*"
-duckdb = "*"
-folium = "*"
-branca = "*"
-pyarrow = "*"
-scipy = "*"
-numpy = "*"
+[tool.marimo.wasm]
+packages = [
+    "plotly",
+    "pandas",
+    "duckdb", 
+    "folium",
+    "branca",
+    "pyarrow",
+    "scipy",
+    "numpy",
+    "openblas"
+]
