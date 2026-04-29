@@ -1,3 +1,4 @@
+# marimo: requirements=["plotly", "pandas", "duckdb", "folium", "branca", "pyarrow", "scipy"]
 import marimo
 
 __generated_with = "0.23.3"
