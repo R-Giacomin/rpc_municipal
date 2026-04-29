@@ -7,7 +7,7 @@
   "cells": [
     {
       "id": "Hbol",
-      "code_hash": "05d097a3333cbdc8c57237422bd2d75b",
+      "code_hash": "56c3ed2e916ef599db0b9c046a1538f5",
       "outputs": [
         {
           "type": "data",
@@ -85,7 +85,7 @@
     },
     {
       "id": "Xref",
-      "code_hash": "cf0130dee2e79f1474531c2473964ea1",
+      "code_hash": "0cc014d4392195384fbee0a1eac61a0d",
       "outputs": [
         {
           "type": "data",
@@ -94,11 +94,18 @@
           }
         }
       ],
-      "console": []
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "C:\\Users\\rafael.giacomin\\AppData\\Local\\Temp\\marimo_9992\\__marimo__cell_Xref_.py:28: DeprecationWarning: *choropleth_mapbox* is deprecated! Use *choropleth_map* instead. Learn more at: https://plotly.com/python/mapbox-to-maplibre/\n  fig = px.choropleth_mapbox(\n",
+          "mimetype": "text/plain"
+        }
+      ]
     },
     {
       "id": "SFPL",
-      "code_hash": "304dbf8d9598756be5e8f8a51e95d254",
+      "code_hash": "cee8b372cc82844fa4823c110bb9ffa8",
       "outputs": [
         {
           "type": "data",

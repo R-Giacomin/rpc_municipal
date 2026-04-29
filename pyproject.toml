@@ -5,11 +5,10 @@ description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
     "altair",
-    "branca",
     "duckdb",
-    "folium",
     "marimo",
     "pandas",
+    "plotly",
     "pyarrow",
     "scipy",
 ]

@@ -1,4 +1,4 @@
-# marimo: requirements=["altair", "pandas", "duckdb", "folium", "branca", "pyarrow", "scipy"]
+# marimo: requirements=["altair", "pandas", "duckdb", "pyarrow", "scipy", "plotly"]
 
 import marimo
 
@@ -12,15 +12,16 @@ def _():
     import pandas as pd
     import duckdb
     import altair as alt
-    # Desabilitar o limite de 5000 linhas do Altair
-    alt.data_transformers.disable_max_rows()
-    import folium
-    import branca.colormap as cm
+    import plotly.express as px
     import json
     import os
     from metodologia_html import METODOLOGIA_HTML
     import numpy as np
     from scipy.stats import gaussian_kde
+    import plotly.graph_objects as go
+
+    # Desabilitar limite de linhas do Altair
+    alt.data_transformers.disable_max_rows()
 
     # Carregar dados
     df_full = pd.read_parquet("Municipios_Rpc_previstos_Reais.parquet")
@@ -47,11 +48,10 @@ def _():
     map_regiao_uf = df_full.groupby('Região')['sigla_uf'].unique().apply(list).to_dict()
     return (
         METODOLOGIA_HTML,
-        alt,
         con,
         df_full,
-        folium,
         gaussian_kde,
+        go,
         json,
         lista_anos,
         lista_regioes,
@@ -60,6 +60,7 @@ def _():
         mo,
         np,
         pd,
+        px,
     )
 
 
@@ -140,7 +141,7 @@ def _(df_filtered, mo):
 
 
 @app.cell
-def _(df_filtered, folium, json, mo):
+def _(df_filtered, json, mo, px):
     # Carregar e processar o GeoJSON removendo o último dígito do codarea
     geojson_path = "./assets/municipios_br_simpl.geojson"
 
@@ -148,209 +149,128 @@ def _(df_filtered, folium, json, mo):
     with open(geojson_path, 'r') as f:
         geojson_data = json.load(f)
 
-    # Processar cada feature: remover o último dígito do codarea
+    # Função para normalizar códigos para 6 dígitos
+    def normalize_6_digits(val):
+        s = str(int(float(val)))
+        return s[:6] if len(s) == 7 else s
+
+    # Processar GeoJSON: Garantir que cada feature tenha um 'id' de 6 dígitos
     for feature in geojson_data['features']:
         if 'codarea' in feature['properties']:
-            codarea_original = feature['properties']['codarea']
-            # Remover o último dígito (converter de 7 para 6 dígitos)
-            codarea_6dig = codarea_original[:-1] if codarea_original else ""
-            feature['properties']['codarea'] = codarea_6dig
+            cod_6 = normalize_6_digits(feature['properties']['codarea'])
+            feature['id'] = cod_6
+            feature['properties']['codarea'] = cod_6
 
-    # Preparar dados
+    # Preparar dados: Garantir que a coluna 'id' tenha os mesmos 6 dígitos
     map_data = df_filtered[['codigo_ibge', 'Rpc_Reais2024', 'municipio', 'sigla_uf']].copy()
-    # Garantir 6 dígitos para o merge com GeoJSON
-    map_data['codigo_ibge'] = map_data['codigo_ibge'].astype(str).apply(lambda x: x[:6].zfill(6))
+    map_data['id'] = map_data['codigo_ibge'].apply(normalize_6_digits)
 
     if map_data.empty:
         fig_map = mo.md("Sem dados para exibir no mapa.")
     else:
-        # Calcular bins
-        _min, _max = map_data['Rpc_Reais2024'].min(), map_data['Rpc_Reais2024'].max()
-        if _min == _max:
-            _min = _min * 0.9
-            _max = _max * 1.1
-
-        # Criar o mapa base com coordenadas corrigidas para o Brasil
-        _m = folium.Map(
-            location=[-14.2350, -51.9253],  # Centro geográfico do Brasil
-            zoom_start=4.2,  # Zoom adequado para mostrar o país inteiro
-            tiles="cartodbpositron",
-            width='100%',  # Largura 100% do contêiner
-            height='600px',  # Altura fixa
-            control_scale=True  # Adiciona escala no mapa
+        # Criar mapa com Plotly
+        fig = px.choropleth_mapbox(
+            map_data,
+            geojson=geojson_data,
+            locations='id',
+            # Ao omitir featureidkey, o Plotly usa o campo 'id' que definimos no loop acima
+            color='Rpc_Reais2024',
+            color_continuous_scale='Teal',
+            range_color=(map_data['Rpc_Reais2024'].min(), map_data['Rpc_Reais2024'].max()),
+            mapbox_style='carto-positron',
+            zoom=3.5,
+            center={"lat": -14.235, "lon": -51.925},
+            opacity=0.8,
+            labels={'Rpc_Reais2024': 'RPC (R$ 2024)'},
+            hover_name='municipio',
+            hover_data={'Rpc_Reais2024': ':,.2f', 'sigla_uf': True, 'id': True}
+        )
+        fig.update_layout(
+            margin={"r": 0, "t": 0, "l": 0, "b": 0},
+            height=600,
+            dragmode=False
         )
 
-        # Ajustar os bounds máximo para garantir que todo o Brasil seja visível
-        _m.fit_bounds([[-33.75, -73.98], [5.27, -34.79]])  # Bounding box do Brasil
-
-        # Adicionar choropleth com o GeoJSON processado
-        choropleth = folium.Choropleth(
-            geo_data=geojson_data,
-            data=map_data,
-            columns=["codigo_ibge", "Rpc_Reais2024"],
-            key_on="feature.properties.codarea",
-            fill_color="PuBuGn",
-            fill_opacity=0.9,
-            line_opacity=0.01,
-            legend_name="RPC (R$ 2024)",
-            bins=10,
-            highlight=True,
-            reset=True,
-            smooth_factor=0.5,
-            nan_fill_color="lightgray",
-            nan_fill_opacity=0.3
-        ).add_to(_m)
-
-        # Criar dicionários para lookup rápido
-        nome_dict = dict(zip(map_data['codigo_ibge'], map_data['municipio']))
-        rpc_dict = dict(zip(map_data['codigo_ibge'], map_data['Rpc_Reais2024']))
-
-        # Enriquecer o GeoJSON com nomes e valores formatados para o tooltip
-        for feature in choropleth.geojson.data['features']:
-            codarea = feature['properties'].get('codarea', '')
-            if codarea in nome_dict:
-                feature['properties']['nome_mun'] = nome_dict[codarea]
-                valor = rpc_dict[codarea]
-                feature['properties']['rpc_str'] = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            else:
-                feature['properties']['nome_mun'] = 'Sem dado'
-                feature['properties']['rpc_str'] = 'N/A'
-
-        # Adicionar tooltip único com todas as informações
-        folium.GeoJsonTooltip(
-            fields=['nome_mun', 'codarea', 'rpc_str'],
-            aliases=['Município: ', 'Código IBGE: ', 'RPC: '],
-            style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px; border: 1px solid grey; border-radius: 5px;")
-        ).add_to(choropleth.geojson)
-
-        # JavaScript para garantir que o mapa ocupe todo o espaço
-        fix_size_js = """
-        <script>
-        setTimeout(function() {
-            var mapDiv = document.querySelector('.folium-map');
-            if (mapDiv) {
-                mapDiv.style.width = '100%';
-                mapDiv.style.height = '600px';
-                var mapObj = window[mapDiv.id];
-                if (mapObj) {
-                    mapObj.invalidateSize();
-                    mapObj.setView([-14.2350, -51.9253], 4.2);
-                }
-            }
-        }, 200);
-        </script>
-        """
-        _m.get_root().html.add_child(folium.Element(fix_size_js))
-
-        # Usar um contêiner HTML com CSS adequado
-        fig_map = mo.Html(f'''
-        <div style="width: 100%; height: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-            {_m._repr_html_()}
-        </div>
-        ''')
+        fig_map = mo.ui.plotly(fig)
     return (fig_map,)
 
 
 @app.cell
 def _(
-    alt,
     con,
     df_filtered,
+    filtro_ano,
     filtro_regiao,
     filtro_uf,
     gaussian_kde,
+    go,
     mo,
     np,
     pd,
+    px,
 ):
-    # Desabilitar limite de linhas
-    alt.data_transformers.disable_max_rows()
 
-    # Configuração para gráficos responsivos
-    def make_responsive(chart, height=450):
-        return chart.properties(
-            height=height,
-            width='container'
-        ).configure_view(
-            strokeWidth=0
-        )
-
-    # Gráfico de Rank
+    # Gráfico de Rank (Top 10 / Bot 10)
     top10 = df_filtered.nlargest(10, 'Rpc_Reais2024')
     bot10 = df_filtered.nsmallest(10, 'Rpc_Reais2024')
     rank_df = pd.concat([top10, bot10]).sort_values('Rpc_Reais2024', ascending=True)
 
-    fig_rank = make_responsive(
-        alt.Chart(rank_df).mark_bar(color='#1351B4').encode(
-            y=alt.Y('municipio:N', sort='-x', title=''),
-            x=alt.X('Rpc_Reais2024:Q', title='RPC (R$ 2024)'),
-            tooltip=['municipio', 'Rpc_Reais2024']
-        ).properties(
-            title='Top 10 e Bottom 10 Municípios por RPC'
-        )
+    fig_rank = px.bar(
+        rank_df, y='municipio', x='Rpc_Reais2024', orientation='h',
+        color_discrete_sequence=['#1351B4'],
+        labels={'Rpc_Reais2024': 'RPC (R$ 2024)', 'municipio': ''},
+        title='Top 10 e Bottom 10 Municípios por RPC'
     )
+    fig_rank.update_layout(height=450, margin=dict(l=0, r=20, t=40, b=0), showlegend=False)
 
-    # Gráfico de Densidade Geral
-    data = df_filtered['Rpc_Reais2024'].dropna()
-    if len(data) > 2:
-        kde = gaussian_kde(data)
-        x_range = np.linspace(data.min(), data.max(), 200)
-        y_vals = kde(x_range)
-        kde_df = pd.DataFrame({'Rpc_Reais2024': x_range, 'density': y_vals})
-    else:
-        kde_df = pd.DataFrame({'Rpc_Reais2024': [], 'density': []})
+    # Função auxiliar para gerar curvas KDE com preenchimento (estilo Seaborn)
+    def create_kde_plotly(df, x_col, hue_col=None, title=""):
+        fig = go.Figure()
+        colors = px.colors.qualitative.Plotly
 
-    fig_dist_total = make_responsive(
-        alt.Chart(kde_df).mark_area(
-            color='#1351B4',
-            opacity=0.5,
-            line={'color': '#1351B4', 'width': 3}
-        ).encode(
-            x=alt.X('Rpc_Reais2024:Q', title='RPC (R$ 2024)'),
-            y=alt.Y('density:Q', title='Densidade')
-        ).properties(
-            title='Densidade Geral da RPC dos Municípios (R$ 2024)'
+        if hue_col and hue_col in df.columns:
+            categories = sorted(df[hue_col].unique())
+            for i, cat in enumerate(categories):
+                subset = df[df[hue_col] == cat][x_col].dropna()
+                if len(subset) < 3: continue
+
+                kde = gaussian_kde(subset)
+                x_range = np.linspace(df[x_col].min(), df[x_col].max(), 200)
+                y_vals = kde(x_range)
+
+                fig.add_trace(go.Scatter(
+                    x=x_range, y=y_vals, mode='lines',
+                    line=dict(width=2, color=colors[i % len(colors)]),
+                    fill='tozeroy', name=str(cat), opacity=0.4
+                ))
+        else:
+            data = df[x_col].dropna()
+            if len(data) > 2:
+                kde = gaussian_kde(data)
+                x_range = np.linspace(data.min(), data.max(), 200)
+                y_vals = kde(x_range)
+                fig.add_trace(go.Scatter(
+                    x=x_range, y=y_vals, mode='lines',
+                    line=dict(width=3, color='#1351B4'),
+                    fill='tozeroy', name='Geral', opacity=0.5
+                ))
+
+        fig.update_layout(
+            title=title, xaxis_title='RPC (R$ 2024)', yaxis_title='Densidade',
+            height=450, margin=dict(l=0, r=20, t=40, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            template='plotly_white'
         )
-    )
+        return fig
 
-    # Gráfico de Densidade com Hue
+    # NOVO: Gráfico de Densidade Geral (KDE)
+    fig_dist_total = create_kde_plotly(df_filtered, 'Rpc_Reais2024', title='Densidade Geral da RPC dos Municípios(R$ 2024)')
+
+    # NOVO: Gráfico de Densidade com Hue (Região ou UF)
     _hue_col = 'Região' if filtro_regiao.value == "Todas" else 'sigla_uf'
+    fig_dist_hue = create_kde_plotly(df_filtered, 'Rpc_Reais2024', hue_col=_hue_col, title=f'Densidade da RPC dos Municípios por {_hue_col}')
 
-    kde_dfs = []
-    categories = sorted(df_filtered[_hue_col].unique())
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-
-    for i, cat in enumerate(categories):
-        subset = df_filtered[df_filtered[_hue_col] == cat]['Rpc_Reais2024'].dropna()
-        if len(subset) < 3:
-            continue
-        kde = gaussian_kde(subset)
-        x_range = np.linspace(df_filtered['Rpc_Reais2024'].min(), df_filtered['Rpc_Reais2024'].max(), 200)
-        y_vals = kde(x_range)
-        temp_df = pd.DataFrame({
-            'Rpc_Reais2024': x_range,
-            'density': y_vals,
-            _hue_col: cat
-        })
-        kde_dfs.append(temp_df)
-
-    hue_kde_df = pd.concat(kde_dfs, ignore_index=True) if kde_dfs else pd.DataFrame({'Rpc_Reais2024': [], 'density': [], _hue_col: []})
-
-    fig_dist_hue = make_responsive(
-        alt.Chart(hue_kde_df).mark_area(
-            opacity=0.25,
-            interpolate='basis',
-            line={'width': 2}
-        ).encode(
-            x=alt.X('Rpc_Reais2024:Q', title='RPC (R$ 2024)'),
-            y=alt.Y('density:Q', title='Densidade', stack=None),
-            color=alt.Color(f'{_hue_col}:N', title=_hue_col, scale=alt.Scale(range=colors[:len(categories)])),
-        ).properties(
-            title=f'Densidade da RPC dos Municípios por {_hue_col}'
-        )
-    )
-
-    # Gráfico de Trajetória Temporal
+    # Gráfico de Trajetória Temporal Responsivo
     _where_ts = []
     _params_ts = []
     if filtro_regiao.value != "Todas":
@@ -361,6 +281,8 @@ def _(
         _params_ts.append(filtro_uf.value)
 
     _where_clause = f"WHERE {' AND '.join(_where_ts)}" if _where_ts else ""
+
+    # Determina o que mostrar na legenda (Região ou UF)
     _group_col = 'sigla_uf' if (filtro_regiao.value != "Todas" or filtro_uf.value != "Todas") else 'Região'
 
     _ts_query = f"""
@@ -371,17 +293,14 @@ def _(
     """
     ts_df = con.execute(_ts_query, _params_ts).df()
 
-    fig_ts = make_responsive(
-        alt.Chart(ts_df).mark_line(point=True).encode(
-            x=alt.X('Ano:O', title='Ano'),
-            y=alt.Y('media_rpc:Q', title='RPC Média (R$ 2024)'),
-            color=alt.Color(f'{_group_col}:N', title=_group_col),
-            tooltip=['Ano', 'media_rpc', _group_col]
-        ).properties(
-            title=f'Trajetória Temporal da Renda Média dos Municípios por {_group_col}'
-        )
+    fig_ts = px.line(
+        ts_df, x='Ano', y='media_rpc', color=_group_col,
+        labels={'media_rpc': 'RPC Média (R$ 2024)', 'Ano': 'Ano', _group_col: _group_col},
+        title=f'Trajetória Temporal da Renda Média dos Municípios por {_group_col}'
     )
-
+    fig_ts.add_vline(x=filtro_ano.value, line_dash="dash", line_color="gray", 
+                     annotation_text=f"Ano: {filtro_ano.value}", annotation_position="top left")
+    fig_ts.update_layout(height=450, margin=dict(l=0, r=20, t=40, b=0))
     mo.output.replace(None)
     return fig_dist_hue, fig_dist_total, fig_rank, fig_ts
 
