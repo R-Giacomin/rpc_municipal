@@ -168,12 +168,14 @@ body, .marimo {
 /* Sticky Marimo Tab List */
 [role="tablist"] {
   position: sticky !important;
-  top: 165px !important; /* Aumentado para evitar que fique sob o cabeçalho */
-  z-index: 1001 !important; /* Maior que o do cabeçalho para garantir visibilidade */
-  background: var(--bg) !important;
-  padding: 12px 16px !important;
-  margin: 0 -16px !important;
-  border-bottom: 1px solid var(--border);
+  top: 165px !important; 
+  z-index: 1001 !important;
+  background: var(--white) !important;
+  padding: 8px 16px !important;
+  margin: 0 0 24px 0 !important; /* Alinhado e com espaçamento inferior */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: none !important;
 }
 
 /* Ajuste de scroll-margin para links internos */
@@ -182,23 +184,25 @@ h2, .section-title {
 }
 
 /* Layout Responsivo para Gráficos */
-/* Por padrão (mobile), o vstack já empilha. No desktop, forçamos o lado a lado. */
+/* Por padrão (mobile), o vstack já empilha. No desktop, forçamos o lado a lado para sub-vstacks. */
 @media (min-width: 1100px) {
-  [role="tabpanel"] .marimo-vstack > .marimo-vstack:last-child {
+  [role="tabpanel"] .marimo-vstack > .marimo-vstack {
     display: flex !important;
     flex-direction: row !important;
     gap: 20px !important;
     width: 100% !important;
+    align-items: flex-start;
   }
   
-  [role="tabpanel"] .marimo-vstack > .marimo-vstack:last-child > * {
+  [role="tabpanel"] .marimo-vstack > .marimo-vstack > * {
     flex: 1 !important;
     width: 50% !important;
+    min-width: 0; /* Evita que o plotly estoure o container */
   }
 }
 
 @media (max-width: 1099px) {
-  [role="tabpanel"] .marimo-vstack > .marimo-vstack:last-child > * {
+  [role="tabpanel"] .marimo-vstack > .marimo-vstack > * {
     width: 100% !important;
     margin-bottom: 20px;
   }

@@ -15,6 +15,9 @@ def _():
     import json
     import os
     from metodologia_html import METODOLOGIA_HTML
+    import numpy as np
+    from scipy.stats import gaussian_kde
+    import plotly.graph_objects as go
 
     # Carregar dados
     df_full = pd.read_parquet("Municipios_Rpc_previstos_Reais.parquet")
@@ -45,12 +48,15 @@ def _():
         con,
         df_full,
         folium,
+        gaussian_kde,
+        go,
         json,
         lista_anos,
         lista_regioes,
         lista_ufs,
         map_regiao_uf,
         mo,
+        np,
         pd,
         px,
     )
@@ -245,7 +251,21 @@ def _(df_filtered, folium, json, mo):
 
 
 @app.cell
-def _(con, df_filtered, mo, pd, px):
+def _(
+    con,
+    df_filtered,
+    filtro_ano,
+    filtro_regiao,
+    filtro_uf,
+    gaussian_kde,
+    go,
+    mo,
+    np,
+    pd,
+    px,
+):
+
+    # Gráfico de Rank (Top 10 / Bot 10)
     top10 = df_filtered.nlargest(10, 'Rpc_Reais2024')
     bot10 = df_filtered.nsmallest(10, 'Rpc_Reais2024')
     rank_df = pd.concat([top10, bot10]).sort_values('Rpc_Reais2024', ascending=True)
@@ -258,18 +278,86 @@ def _(con, df_filtered, mo, pd, px):
     )
     fig_rank.update_layout(height=450, margin=dict(l=0, r=20, t=40, b=0), showlegend=False)
 
-    ts_df = con.execute("""
-        SELECT Ano, sigla_uf, AVG(Rpc_Reais2024) as media_rpc
-        FROM dados GROUP BY Ano, sigla_uf ORDER BY Ano
-    """).df()
+    # Função auxiliar para gerar curvas KDE com preenchimento (estilo Seaborn)
+    def create_kde_plotly(df, x_col, hue_col=None, title=""):
+        fig = go.Figure()
+        colors = px.colors.qualitative.Plotly
+
+        if hue_col and hue_col in df.columns:
+            categories = sorted(df[hue_col].unique())
+            for i, cat in enumerate(categories):
+                subset = df[df[hue_col] == cat][x_col].dropna()
+                if len(subset) < 3: continue
+
+                kde = gaussian_kde(subset)
+                x_range = np.linspace(df[x_col].min(), df[x_col].max(), 200)
+                y_vals = kde(x_range)
+
+                fig.add_trace(go.Scatter(
+                    x=x_range, y=y_vals, mode='lines',
+                    line=dict(width=2, color=colors[i % len(colors)]),
+                    fill='tozeroy', name=str(cat), opacity=0.4
+                ))
+        else:
+            data = df[x_col].dropna()
+            if len(data) > 2:
+                kde = gaussian_kde(data)
+                x_range = np.linspace(data.min(), data.max(), 200)
+                y_vals = kde(x_range)
+                fig.add_trace(go.Scatter(
+                    x=x_range, y=y_vals, mode='lines',
+                    line=dict(width=3, color='#1351B4'),
+                    fill='tozeroy', name='Geral', opacity=0.5
+                ))
+
+        fig.update_layout(
+            title=title, xaxis_title='RPC (R$ 2024)', yaxis_title='Densidade',
+            height=450, margin=dict(l=0, r=20, t=40, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            template='plotly_white'
+        )
+        return fig
+
+    # NOVO: Gráfico de Densidade Geral (KDE)
+    fig_dist_total = create_kde_plotly(df_filtered, 'Rpc_Reais2024', title='Densidade Geral da RPC dos Municípios(R$ 2024)')
+
+    # NOVO: Gráfico de Densidade com Hue (Região ou UF)
+    _hue_col = 'Região' if filtro_regiao.value == "Todas" else 'sigla_uf'
+    fig_dist_hue = create_kde_plotly(df_filtered, 'Rpc_Reais2024', hue_col=_hue_col, title=f'Densidade da RPC dos Municípios por {_hue_col}')
+
+    # Gráfico de Trajetória Temporal Responsivo
+    _where_ts = []
+    _params_ts = []
+    if filtro_regiao.value != "Todas":
+        _where_ts.append('"Região" = ?')
+        _params_ts.append(filtro_regiao.value)
+    if filtro_uf.value != "Todas":
+        _where_ts.append("sigla_uf = ?")
+        _params_ts.append(filtro_uf.value)
+
+    _where_clause = f"WHERE {' AND '.join(_where_ts)}" if _where_ts else ""
+
+    # Determina o que mostrar na legenda (Região ou UF)
+    _group_col = 'sigla_uf' if (filtro_regiao.value != "Todas" or filtro_uf.value != "Todas") else 'Região'
+
+    _ts_query = f"""
+        SELECT Ano, {_group_col}, AVG(Rpc_Reais2024) as media_rpc 
+        FROM dados {_where_clause} 
+        GROUP BY Ano, {_group_col} 
+        ORDER BY Ano
+    """
+    ts_df = con.execute(_ts_query, _params_ts).df()
+
     fig_ts = px.line(
-        ts_df, x='Ano', y='media_rpc', color='sigla_uf',
-        labels={'media_rpc': 'RPC Média (R$ 2024)', 'Ano': 'Ano', 'sigla_uf': 'UF'},
-        title='Trajetória Temporal da Renda Média dos Municípios por UF'
+        ts_df, x='Ano', y='media_rpc', color=_group_col,
+        labels={'media_rpc': 'RPC Média (R$ 2024)', 'Ano': 'Ano', _group_col: _group_col},
+        title=f'Trajetória Temporal da Renda Média dos Municípios por {_group_col}'
     )
+    fig_ts.add_vline(x=filtro_ano.value, line_dash="dash", line_color="gray", 
+                     annotation_text=f"Ano: {filtro_ano.value}", annotation_position="top left")
     fig_ts.update_layout(height=450, margin=dict(l=0, r=20, t=40, b=0))
     mo.output.replace(None)
-    return fig_rank, fig_ts
+    return fig_dist_hue, fig_dist_total, fig_rank, fig_ts
 
 
 @app.cell
@@ -350,6 +438,8 @@ def _(METODOLOGIA_HTML, mo):
 def _(
     data_table,
     download_csv,
+    fig_dist_hue,
+    fig_dist_total,
     fig_map,
     fig_rank,
     fig_ts,
@@ -382,7 +472,8 @@ def _(
             mo.Html('<div class="section-title">Mapa Coroplético</div>'),
             fig_map,
             mo.Html('<div class="section-title">Análise Comparativa</div>'),
-            mo.vstack([fig_rank, fig_ts])
+            mo.vstack([fig_rank, fig_dist_total]),
+            mo.vstack([fig_dist_hue, fig_ts])
     ])
 
     explorador_tab = mo.vstack([

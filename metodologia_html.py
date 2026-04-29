@@ -13,7 +13,8 @@ METODOLOGIA_HTML = """
     {{FLUXOGRAMA_IMG}}
     <p style="font-size: 12px; color: #666; margin-top: 10px;">Fluxograma da metodologia aplicada para a estimativa do rendimento per capita municipal.</p>
 </div>
-
+<p>No desenho metodológico adotado, a estimação do rendimento per capita dos municípios foi realizada por meio de um preditor sintético baseado em algoritmo de Machine Learning (ML), treinado exclusivamente no nível dos estratos de municípiosda PNAD Contínua.</p>
+<p>A etapa subsequente de benchmarking fez com que a média ponderada das estimativas municipais correspondesse exatamente à estimativa direta do estrato em questão. Assim, o papel do preditor sintético transcende a simples geração de valores preliminares: ele atuou como um mecanismo de alocação interna da informação, definindo o perfil relativo dos municípios dentro de cada área.</p>
 <h3>Fontes de Dados e Variáveis Auxiliares</h3>
 <p>O modelo sintético foi calibrado utilizando a combinação de dados amostrais e registros administrativos:</p>
 <table>
@@ -38,7 +39,7 @@ METODOLOGIA_HTML = """
 </table>
 
 <h3>Valores em Reais de 2024</h3>
-<p>Todas as estimativas são disponibilizadas tanto em valores correntes (<code>Rpc</code>) quanto deflacionadas para <strong>Reais de 2024</strong> (<code>Rpc_Reais2024</code>), utilizando o deflator CO2e acumulado do período.</p>
+<p>Todas as estimativas são disponibilizadas tanto em valores correntes (<code>Rpc</code>) quanto deflacionadas para <strong>Reais de 2024</strong> (<code>Rpc_Reais2024</code>).</p>
 
 <h3>Referência</h3>
 <p>GIACOMIN, R. <em>Estimação do Rendimento Per Capita Municipal no Brasil (2012–2024): Uma Abordagem Híbrida com SAE e Machine Learning</em>. Artigo submetido para publicação.</p>
