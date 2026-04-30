@@ -364,11 +364,20 @@ def _(
 
     fig_rank = px.bar(
         rank_df, y='municipio', x='Rpc_Reais2024', orientation='h',
-        color_discrete_sequence=['#1351B4'],
+        color='Rpc_Reais2024', color_continuous_scale='Teal',
         labels={'Rpc_Reais2024': 'RPC (R$ 2024)', 'municipio': ''},
-        title='Top 10 e Bottom 10 Municípios por RPC'
+        title=f'Top 10 e Bottom 10 Municípios por RPC em {filtro_ano.value}'
     )
-    fig_rank.update_layout(height=450, margin=dict(l=0, r=20, t=40, b=0), showlegend=False)
+    fig_rank.update_traces(textfont_size=10, textangle=0, cliponaxis=False)
+    fig_rank.update_layout(
+        template='plotly_white',
+        height=500,
+        margin=dict(l=0, r=50, t=50, b=0),
+        showlegend=False,
+        coloraxis_showscale=False,
+        xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.05)'),
+        yaxis=dict(categoryorder='total ascending')
+    )
 
     # Função auxiliar para gerar curvas KDE com preenchimento (estilo Seaborn)
     def create_kde_plotly(df, x_col, hue_col=None, title=""):
@@ -411,11 +420,11 @@ def _(
         return fig
 
     # NOVO: Gráfico de Densidade Geral (KDE)
-    fig_dist_total = create_kde_plotly(df_filtered, 'Rpc_Reais2024', title='Densidade Geral da RPC dos Municípios(R$ 2024)')
+    fig_dist_total = create_kde_plotly(df_filtered, 'Rpc_Reais2024', title=f'Densidade Geral da RPC dos Municípios em {filtro_ano.value}')
 
     # NOVO: Gráfico de Densidade com Hue (Região ou UF)
     _hue_col = 'Região' if filtro_regiao.value == "Todas" else 'sigla_uf'
-    fig_dist_hue = create_kde_plotly(df_filtered, 'Rpc_Reais2024', hue_col=_hue_col, title=f'Densidade da RPC dos Municípios por {_hue_col}')
+    fig_dist_hue = create_kde_plotly(df_filtered, 'Rpc_Reais2024', hue_col=_hue_col, title=f'Densidade da RPC dos Municípios por {_hue_col} em {filtro_ano.value}')
 
     # Gráfico de Trajetória Temporal Responsivo
     _where_ts = []
@@ -442,12 +451,20 @@ def _(
 
     fig_ts = px.line(
         ts_df, x='Ano', y='media_rpc', color=_group_col,
+        markers=True,
         labels={'media_rpc': 'RPC Média (R$ 2024)', 'Ano': 'Ano', _group_col: _group_col},
         title=f'Trajetória Temporal da Renda Média dos Municípios por {_group_col}'
     )
-    fig_ts.add_vline(x=filtro_ano.value, line_dash="dash", line_color="gray", 
-                     annotation_text=f"Ano: {filtro_ano.value}", annotation_position="top left")
-    fig_ts.update_layout(height=450, margin=dict(l=0, r=20, t=40, b=0))
+    fig_ts.add_vline(x=filtro_ano.value, line_dash="dot", line_color="#E52207", line_width=2,
+                     annotation_text=f" {filtro_ano.value}", annotation_position="top left")
+    fig_ts.update_layout(
+        template='plotly_white',
+        height=450,
+        margin=dict(l=0, r=20, t=50, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+        xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.05)', dtick=1),
+        yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.05)')
+    )
     mo.output.replace(None)
     return fig_dist_hue, fig_dist_total, fig_rank, fig_ts
 
@@ -488,16 +505,20 @@ def _(df_filtered, mo):
 
 
 @app.cell
-def _(df_full, mo):
-    # Usamos uma função lambda para que o processamento só ocorra no clique.
-    # Isso é muito mais estável para bases de dados maiores.
-    download_csv = mo.download(
-        data=lambda: df_full.to_csv(index=False).encode('utf-8-sig'),
-        filename="rpc_municipal_completo.csv",
-        label="⬇️ Baixar Tabela Completa (CSV)"
+def _(df_filtered, df_full, mo):
+    # Configuração para padrão brasileiro: sep=';' e decimal=','
+    download_csv_filtrado = mo.download(
+        data=lambda: df_filtered.to_csv(sep=';', decimal=',', index=False).encode('utf-8-sig'),
+        filename="rpc_municipal_filtrado.csv",
+        label="⬇️ Baixar Dados Filtrados (CSV)"
     )
-    mo.output.replace(None)
-    return (download_csv,)
+
+    download_csv_completo = mo.download(
+        data=lambda: df_full.to_csv(sep=';', decimal=',', index=False).encode('utf-8-sig'),
+        filename="rpc_municipal_completo.csv",
+        label="⬇️ Baixar Tabela Completa (Série Histórica)"
+    )
+    return download_csv_completo, download_csv_filtrado
 
 
 @app.cell
@@ -529,7 +550,8 @@ def _(METODOLOGIA_HTML, mo):
 @app.cell
 def _(
     data_table,
-    download_csv,
+    download_csv_completo,
+    download_csv_filtrado,
     fig_dist_hue,
     fig_dist_total,
     fig_map,
@@ -571,9 +593,11 @@ def _(
     explorador_tab = mo.vstack([
             mo.Html('<div class="section-title">Tabela Analítica</div>'),
             mo.Html('<p style="color:#666;font-size:13px;">Ordenado por RPC (decrescente).</p>'),
+            mo.hstack([download_csv_filtrado], justify="end"),
             data_table,
-            mo.Html('<div class="section-title">Baixar os dados brutos com todos os anos da série histórica</div>'),
-            mo.hstack([download_csv], justify="start")
+            mo.Html('<div class="section-title">Exportação de Dados Completos</div>'),
+            mo.Html('<p style="color:#666;font-size:13px;">Baixar a série histórica completa (2012-2024) com todas as variáveis.</p>'),
+            mo.hstack([download_csv_completo], justify="start")
     ])
 
     tab_content = {
