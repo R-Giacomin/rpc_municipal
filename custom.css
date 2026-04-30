@@ -162,26 +162,82 @@ body, .marimo {
   background: var(--blue-dark);
 }
 
-@media (max-width: 768px) {
-  .kpi-row { flex-direction: column; }
-}
-/* Sticky Marimo Tab List */
-[role="tablist"] {
-  position: sticky !important;
-  top: 165px !important; 
-  z-index: 1001 !important;
-  background: var(--white) !important;
-  padding: 8px 16px !important;
-  margin: 0 0 24px 0 !important; /* Alinhado e com espaçamento inferior */
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  border: none !important;
+/* Estrutura do Cabeçalho */
+.main-header-sticky {
+  background: white;
+  padding: 10px 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  width: 100%;
 }
 
-/* Ajuste de scroll-margin para links internos */
-h2, .section-title {
-  scroll-margin-top: 220px;
+.responsive-filters {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 10px 0;
 }
+.filter-item-ano { flex: 2; }
+.filter-item { flex: 1; }
+
+/* ESTILOS DESKTOP */
+@media (min-width: 769px) {
+  .main-header-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+  }
+
+  [role="tablist"] {
+    position: sticky !important;
+    top: 155px !important;
+    z-index: 1001 !important;
+    background: var(--white) !important;
+    padding: 8px 16px !important;
+    margin: 0 0 24px 0 !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: none !important;
+  }
+
+  h2, .section-title {
+    scroll-margin-top: 220px;
+  }
+}
+
+/* ESTILOS MOBILE */
+@media (max-width: 768px) {
+  .main-header-sticky {
+    position: relative;
+    padding: 10px 16px;
+  }
+
+  .responsive-filters {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .filter-item-ano, .filter-item {
+    width: 100% !important;
+  }
+
+  .kpi-row { flex-direction: column; }
+
+  [role="tablist"] {
+    position: relative !important;
+    top: 0 !important;
+    margin: 10px 0 !important;
+    padding: 4px !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  h2, .section-title {
+    scroll-margin-top: 20px !important;
+  }
+}
+
+
 
 /* Layout Responsivo para Gráficos */
 /* Por padrão (mobile), o vstack já empilha. No desktop, forçamos o lado a lado para sub-vstacks. */

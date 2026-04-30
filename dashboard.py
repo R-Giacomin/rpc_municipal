@@ -413,8 +413,8 @@ def _(
 
         fig.update_layout(
             title=title, xaxis_title='RPC (R$ 2024)', yaxis_title='Densidade',
-            height=450, margin=dict(l=0, r=20, t=40, b=0),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            height=480, margin=dict(l=0, r=20, t=60, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
             template='plotly_white'
         )
         return fig
@@ -565,20 +565,17 @@ def _(
     metodologia_content,
     mo,
 ):
-    # Top bar fixa (Header + Filtros)
-    sticky_top = mo.vstack([
-            header,
-            mo.hstack([filtro_ano, filtro_regiao, filtro_uf], widths=[2, 1, 1], gap=1).style({"padding": "10px 0"})
-    ]).style({
-            "position": "sticky",
-            "top": "0",
-            "z-index": "1000",
-            "background": "white",
-            "padding": "10px 20px",
-            "box-shadow": "0 2px 10px rgba(0,0,0,0.1)",
-            "width": "100%",
-            "margin": "0"
-    })
+    # Top bar (Header + Filtros) - Custom HTML para garantir responsividade total
+    sticky_top = mo.Html(f'''
+        <div class="main-header-sticky">
+            {header._repr_html_()}
+            <div class="responsive-filters">
+                <div class="filter-item-ano">{filtro_ano._repr_html_()}</div>
+                <div class="filter-item">{filtro_regiao._repr_html_()}</div>
+                <div class="filter-item">{filtro_uf._repr_html_()}</div>
+            </div>
+        </div>
+    ''')
 
     visao_tab = mo.vstack([
             mo.Html('<div class="section-title">Indicadores Resumo</div>'),
