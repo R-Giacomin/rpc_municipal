@@ -3,7 +3,11 @@
 import marimo
 
 __generated_with = "0.23.3"
-app = marimo.App(width="medium", css_file="custom.css")
+app = marimo.App(
+    width="medium",
+    app_title="Painel Rpc Municipal",
+    css_file="custom.css",
+)
 
 
 @app.cell
@@ -360,12 +364,13 @@ def _(
     # Gráfico de Rank (Top 10 / Bot 10)
     top10 = df_filtered.nlargest(10, 'Rpc_Reais2024')
     bot10 = df_filtered.nsmallest(10, 'Rpc_Reais2024')
-    rank_df = pd.concat([top10, bot10]).sort_values('Rpc_Reais2024', ascending=True)
+    rank_df = pd.concat([top10, bot10]).sort_values('Rpc_Reais2024', ascending=True).copy()
+    rank_df['mun_uf'] = rank_df['municipio'] + ' - ' + rank_df['sigla_uf']
 
     fig_rank = px.bar(
-        rank_df, y='municipio', x='Rpc_Reais2024', orientation='h',
+        rank_df, y='mun_uf', x='Rpc_Reais2024', orientation='h',
         color='Rpc_Reais2024', color_continuous_scale='Teal',
-        labels={'Rpc_Reais2024': 'RPC (R$ 2024)', 'municipio': ''},
+        labels={'Rpc_Reais2024': 'RPC (R$ 2024)', 'mun_uf': ''},
         title=f'Top 10 e Bottom 10 Municípios por RPC em {filtro_ano.value}'
     )
     fig_rank.update_traces(textfont_size=10, textangle=0, cliponaxis=False)
@@ -380,7 +385,7 @@ def _(
     )
 
     # Função auxiliar para gerar curvas KDE com preenchimento (estilo Seaborn)
-    def create_kde_plotly(df, x_col, hue_col=None, title=""):
+    def create_kde_plotly(df, x_col, hue_col=None, title="", color_map=None):
         fig = go.Figure()
         colors = px.colors.qualitative.Plotly
 
@@ -394,9 +399,11 @@ def _(
                 x_range = np.linspace(df[x_col].min(), df[x_col].max(), 200)
                 y_vals = kde(x_range)
 
+                trace_color = color_map.get(cat, colors[i % len(colors)]) if color_map else colors[i % len(colors)]
+
                 fig.add_trace(go.Scatter(
                     x=x_range, y=y_vals, mode='lines',
-                    line=dict(width=2, color=colors[i % len(colors)]),
+                    line=dict(width=2, color=trace_color),
                     fill='tozeroy', name=str(cat), opacity=0.4
                 ))
         else:
@@ -422,9 +429,16 @@ def _(
     # NOVO: Gráfico de Densidade Geral (KDE)
     fig_dist_total = create_kde_plotly(df_filtered, 'Rpc_Reais2024', title=f'Densidade Geral da RPC dos Municípios em {filtro_ano.value}')
 
+    # Consistência das categorias para os dois gráficos
+    _group_col = 'sigla_uf' if (filtro_regiao.value != "Todas" or filtro_uf.value != "Todas") else 'Região'
+    _group_label = 'UF' if _group_col == 'sigla_uf' else 'Região'
+
+    unique_cats = sorted(df_filtered[_group_col].dropna().unique())
+    plotly_colors = px.colors.qualitative.Plotly
+    shared_color_map = {cat: plotly_colors[i % len(plotly_colors)] for i, cat in enumerate(unique_cats)}
+
     # NOVO: Gráfico de Densidade com Hue (Região ou UF)
-    _hue_col = 'Região' if filtro_regiao.value == "Todas" else 'sigla_uf'
-    fig_dist_hue = create_kde_plotly(df_filtered, 'Rpc_Reais2024', hue_col=_hue_col, title=f'Densidade da RPC dos Municípios por {_hue_col} em {filtro_ano.value}')
+    fig_dist_hue = create_kde_plotly(df_filtered, 'Rpc_Reais2024', hue_col=_group_col, title=f'Densidade da RPC dos Municípios por {_group_label} em {filtro_ano.value}', color_map=shared_color_map)
 
     # Gráfico de Trajetória Temporal Responsivo
     _where_ts = []
@@ -438,9 +452,6 @@ def _(
 
     _where_clause = f"WHERE {' AND '.join(_where_ts)}" if _where_ts else ""
 
-    # Determina o que mostrar na legenda (Região ou UF)
-    _group_col = 'sigla_uf' if (filtro_regiao.value != "Todas" or filtro_uf.value != "Todas") else 'Região'
-
     _ts_query = f"""
         SELECT Ano, {_group_col}, AVG(Rpc_Reais2024) as media_rpc 
         FROM dados {_where_clause} 
@@ -452,8 +463,9 @@ def _(
     fig_ts = px.line(
         ts_df, x='Ano', y='media_rpc', color=_group_col,
         markers=True,
-        labels={'media_rpc': 'RPC Média (R$ 2024)', 'Ano': 'Ano', _group_col: _group_col},
-        title=f'Trajetória Temporal da Renda Média dos Municípios por {_group_col}'
+        color_discrete_map=shared_color_map,
+        labels={'media_rpc': 'RPC Média (R$ 2024)', 'Ano': 'Ano', _group_col: _group_label},
+        title=f'Trajetória Temporal da Renda Média dos Municípios por {_group_label}'
     )
     fig_ts.add_vline(x=filtro_ano.value, line_dash="dot", line_color="#E52207", line_width=2,
                      annotation_text=f" {filtro_ano.value}", annotation_position="top left")
