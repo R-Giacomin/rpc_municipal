@@ -1,4 +1,4 @@
-# marimo: requirements=["pandas", "duckdb", "scipy", "plotly", "folium", "branca", "jinja2"]
+# marimo: requirements=["duckdb", "plotly", "folium"]
 
 import marimo
 
@@ -23,7 +23,9 @@ async def _():
         import micropip  # type: ignore
         import pyodide.http  # type: ignore
 
-        await micropip.install(["plotly", "folium", "branca", "jinja2"])
+        # micropip.install removido: o Marimo WASM já instala os pacotes
+        # da diretiva requirements= automaticamente. branca e jinja2 são
+        # dependências transitivas do folium.
 
         async def baixar_arquivo(url, destino):
             pasta = os.path.dirname(destino)
