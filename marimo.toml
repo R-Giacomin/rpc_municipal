@@ -1,4 +1,4 @@
-[tool.marimo.runtime]
+[runtime]
 output_max_bytes = 50_000_000
 
 [tool.marimo.wasm]
