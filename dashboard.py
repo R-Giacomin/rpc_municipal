@@ -23,9 +23,10 @@ async def _():
         import micropip  # type: ignore
         import pyodide.http  # type: ignore
 
-        # micropip.install removido: o Marimo WASM já instala os pacotes
-        # da diretiva requirements= automaticamente. branca e jinja2 são
-        # dependências transitivas do folium.
+        # Apenas plotly e folium precisam de micropip — são pacotes puros Python
+        # não pré-compilados no Pyodide. branca e jinja2 são dependências
+        # transitivas do folium e instalados automaticamente.
+        await micropip.install(["plotly", "folium"])
 
         async def baixar_arquivo(url, destino):
             pasta = os.path.dirname(destino)
