@@ -137,8 +137,8 @@ def _():
     <tr><td>DIRPF (Receita Federal)</td><td>part_pes_IRPF, IRPF_pc</td><td>Proxy de renda alta e massa salarial formal</td></tr>
     <tr><td>RAIS (MTE)</td><td>Ren_Formal_pc, part_emp_formal</td><td>Renda do trabalho formal</td></tr>
     <tr><td>Previdência Social</td><td>Prev_pc, part_aposentados</td><td>Transferências previdenciárias</td></tr>
-    <tr><td>Bolsa Família / Auxílio Brasil</td><td>Bolsa_Familia_pc</td><td>Transferências de renda</td></tr>
     <tr><td>BPC/LOAS</td><td>Ben_Assist_pc</td><td>Benefícios assistenciais</td></tr>
+    <tr><td>Malhas territoriais (IBGE)</td><td>latitude, longitude (centroides)</td><td>Proxy de dependência espacial</td></tr>
     </table>
 
     <h3>Qualidade das Estimativas</h3>
