@@ -155,7 +155,7 @@ def _():
     <p>Todas as estimativas são disponibilizadas tanto em valores correntes (<code>Rpc</code>) quanto deflacionadas para <strong>Reais de 2024</strong> (<code>Rpc_Reais2024</code>).</p>
 
     <h3>Referência</h3>
-    <p>GIACOMIN, R. <em>Estimação do Rendimento Per Capita Municipal no Brasil (2012–2024): Uma Abordagem Híbrida com SAE e Machine Learning</em>. Artigo submetido para publicação.</p>
+    <p> <em>Estimação do Rendimento Per Capita Municipal no Brasil (2012–2024): Uma Abordagem Híbrida com SAE e Machine Learning</em>. Artigo submetido para publicação.</p>
     </div>
     """
     return (METODOLOGIA_HTML,)
